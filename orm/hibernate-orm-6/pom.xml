@@ -12,6 +12,7 @@
 		<version.junit-jupiter>5.11.4</version.junit-jupiter>
 		<version.org.hibernate.orm>6.6.4.Final</version.org.hibernate.orm>
 		<version.org.assertj.assertj-core>3.27.0</version.org.assertj.assertj-core>
+		<jackson.version>2.15.3</jackson.version>
 	</properties>
 
 	<dependencyManagement>
@@ -69,6 +70,26 @@
 			<artifactId>assertj-core</artifactId>
 			<version>${version.org.assertj.assertj-core}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-hibernate6</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>${jackson.version}</version>
 		</dependency>
 	</dependencies>
 
