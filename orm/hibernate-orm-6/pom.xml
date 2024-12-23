@@ -78,8 +78,22 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+					</execution>
+				</executions>
 				<configuration>
-					<release>11</release>
+					<source>21</source>
+					<target>21</target>
+					<annotationProcessors>org.hibernate.processor.HibernateProcessor</annotationProcessors>
+					<annotationProcessorPaths>
+						<annotationProcessorPath>
+							<groupId>org.hibernate.orm</groupId>
+							<artifactId>hibernate-jpamodelgen</artifactId>
+							<version>${version.org.hibernate.orm}</version>
+						</annotationProcessorPath>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 			<plugin>
