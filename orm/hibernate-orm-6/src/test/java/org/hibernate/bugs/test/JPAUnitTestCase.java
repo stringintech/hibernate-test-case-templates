@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.query.criteria.JpaCriteriaQuery;
+import org.hibernate.query.criteria.JpaCteCriteria;
 import org.hibernate.query.criteria.JpaRoot;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -46,7 +47,7 @@ public class JPAUnitTestCase {
 
 
     @Test
-    public void testcase() throws Exception {
+    public void failingTestCase() throws Exception {
         try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             //given
@@ -68,6 +69,64 @@ public class JPAUnitTestCase {
         }
     }
 
+    @Test
+    public void passingTestCase() throws Exception {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
+            entityManager.getTransaction().begin();
+
+            var cb = entityManager.unwrap(Session.class).getCriteriaBuilder();
+
+            // Create CTE query for array aggregation
+            JpaCriteriaQuery<Tuple> cteQuery = cb.createTupleQuery();
+            JpaRoot<Book> cteRoot = cteQuery.from(Book.class);
+            cteQuery.multiselect(
+                    cb.arrayAgg(cb.asc(cteRoot.get("title")), cteRoot.get("title"))
+                            .alias("titles_array")
+            );
+
+            // Main query using CTE for array to string conversion
+            JpaCriteriaQuery<Tuple> query = cb.createTupleQuery();
+            JpaCteCriteria<Tuple> titlesCte = query.with(cteQuery);
+            JpaRoot<Tuple> root = query.from(titlesCte);
+
+            query.multiselect(
+                    cb.arrayToString(root.get("titles_array"), cb.literal(","))
+                            .alias("titles")
+            );
+
+            List<Tuple> list = entityManager.createQuery(query).getResultList();
+            assertThat(1).isEqualByComparingTo(1);
+            String titles = list.getFirst().get("titles", String.class);
+            assertThat(titles)
+                    .isEqualTo("title_1,title_2");
+
+        } catch (Throwable t) {
+            LOGGER.error(t.getMessage(), t);
+            throw t;
+        }
+    }
+
+    @Test
+    public void passingTestCaseHQL() throws Exception {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
+            entityManager.getTransaction().begin();
+
+            String titles = entityManager.createQuery(
+                            "with BookTitles as (" +
+                                    "  select array_agg(b.title) within group (order by b.title) as titles " +
+                                    "  from Book b" +
+                                    ") " +
+                                    "select array_to_string(titles, ',') from BookTitles",
+                            String.class)
+                    .getSingleResult();
+
+            assertThat(titles).isEqualTo("title_1,title_2");
+
+        } catch (Throwable t) {
+            LOGGER.error(t.getMessage(), t);
+            throw t;
+        }
+    }
 
     private static void persistData(EntityManager em) {
         Stream.of(
